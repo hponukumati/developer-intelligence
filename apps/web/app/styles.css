@@ -20,6 +20,9 @@ h1 { font-size: clamp(2.25rem, 8vw, 4.8rem); margin: 8px 0; letter-spacing: -0.0
 label, legend { font-weight: 700; }
 .search-row { display: flex; gap: 10px; margin-top: 9px; }
 input { min-width: 0; width: 100%; border: 1px solid #43506f; background: #090d1a; color: inherit; padding: 13px; border-radius: 8px; font: inherit; }
+textarea { min-height: 120px; resize: vertical; width: 100%; border: 1px solid #43506f; background: #090d1a; color: inherit; padding: 13px; border-radius: 8px; font: .85rem ui-monospace, monospace; margin: 8px 0; }
+.ingest { border-bottom: 1px solid #293350; margin-bottom: 22px; padding-bottom: 22px; }
+.ingest button { min-height: 42px; margin-top: 4px; }
 button { border: 0; border-radius: 8px; background: #7092ff; color: #091025; font-weight: 800; padding: 0 20px; cursor: pointer; }
 fieldset { border: 0; padding: 16px 0 0; }
 .mode { display: inline-flex; align-items: center; gap: 5px; margin: 8px 18px 0 0; text-transform: capitalize; font-weight: 500; }

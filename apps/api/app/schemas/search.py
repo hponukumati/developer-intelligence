@@ -46,4 +46,6 @@ class SearchResult(BaseModel):
 class SearchResponse(BaseModel):
     query: str
     latency_ms: int
+    effective_mode: str
+    semantic_enabled: bool
     results: list[SearchResult]

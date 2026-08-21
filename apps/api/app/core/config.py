@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     max_upload_bytes: int = Field(default=1_048_576, ge=1, le=10_485_760)
     max_repository_files: int = Field(default=10_000, ge=1, le=100_000)
     max_repository_bytes: int = Field(default=104_857_600, ge=1, le=1_073_741_824)
+    embedding_provider: str = "disabled"
+    enable_live_embeddings: bool = False
+    openai_api_key: str = ""
 
 
 @lru_cache

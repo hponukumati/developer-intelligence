@@ -25,6 +25,10 @@ The current API supports a local-only code-search workflow:
 
 The document endpoint does not access the filesystem, clone URLs, or contact GitHub. Python is chunked by top-level functions/classes; other supported text/code formats use bounded line chunks.
 
+## Embedding provider gate
+
+The provider interface includes a disabled adapter and an OpenAI-compatible adapter. `ENABLE_LIVE_EMBEDDINGS=false` is the default, so no embedding API key is read and no repository text is sent to any provider. While disabled, search reports `effective_mode: "keyword"` rather than claiming semantic or hybrid results.
+
 ## Security posture
 
 - No secrets in source control; `.env` is ignored.

@@ -1,5 +1,6 @@
 import { SearchPanel } from "../components/search-panel";
 import { EmbeddingSettings } from "../components/embedding-settings";
+import { ReviewPanel } from "../components/review-panel";
 
 export default function Home() {
   return (
@@ -11,6 +12,7 @@ export default function Home() {
       </header>
       <SearchPanel />
       <EmbeddingSettings />
+      <ReviewPanel />
       <section className="grid">
         <article className="card"><h2>Repository ingestion</h2><p>Queued, bounded, and not yet connected to GitHub. No repository content leaves local development.</p><span className="badge">Foundation</span></article>
         <article className="card"><h2>Review queue</h2><p>Structured review requests are accepted by the API. Agent execution and GitHub publishing remain disabled.</p><span className="badge">Planned</span></article>

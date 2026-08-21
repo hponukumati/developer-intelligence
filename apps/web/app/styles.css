@@ -7,6 +7,16 @@ h1 { font-size: clamp(2.25rem, 8vw, 4.8rem); margin: 8px 0; letter-spacing: -0.0
 .eyebrow { color: #82a3ff; font-size: .77rem; font-weight: 700; letter-spacing: .12em; }
 .subtitle { color: #b7bed4; font-size: 1.1rem; }
 .panel, .card { border: 1px solid #293350; background: #141a2e; border-radius: 14px; padding: 24px; }
+.settings-panel { margin-top: 18px; }
+.section-heading { display: flex; justify-content: space-between; gap: 16px; align-items: start; }
+.section-heading h2 { font-size: 1.25rem; margin: 3px 0 0; }
+.section-heading .eyebrow { margin: 0; }
+.notice { color: #cbd3ec; line-height: 1.5; margin: 18px 0; }
+.toggle-row, .acknowledgement { display: flex; align-items: center; gap: 9px; margin: 16px 0; font-weight: 600; }
+.acknowledgement { color: #d5dbef; font-size: .9rem; font-weight: 400; line-height: 1.35; }
+.toggle-row input, .acknowledgement input { width: auto; }
+.settings-panel input[type="password"] { margin: 8px 0 0; }
+.settings-panel button { min-height: 42px; margin-top: 18px; }
 label, legend { font-weight: 700; }
 .search-row { display: flex; gap: 10px; margin-top: 9px; }
 input { min-width: 0; width: 100%; border: 1px solid #43506f; background: #090d1a; color: inherit; padding: 13px; border-radius: 8px; font: inherit; }
@@ -20,6 +30,7 @@ h2 { margin-top: 0; font-size: 1rem; }
 .card p { color: #b7bed4; line-height: 1.5; min-height: 72px; }
 .badge { color: #9bb0ff; font-size: .78rem; font-weight: 700; text-transform: uppercase; }
 .secure { color: #76e5ad; }
+.warning { color: #ffd178; }
 .result { border-top: 1px solid #293350; padding-top: 14px; margin-top: 14px; }
 .result span { display: block; color: #b7bed4; font-size: .85rem; margin: 5px 0; }
 pre { overflow: auto; color: #c8d1f8; font-size: .8rem; }

@@ -27,7 +27,7 @@ The document endpoint does not access the filesystem, clone URLs, or contact Git
 
 ## Embedding provider gate
 
-The provider interface includes a disabled adapter and an OpenAI-compatible adapter. `ENABLE_LIVE_EMBEDDINGS=false` is the default, so no embedding API key is read and no repository text is sent to any provider. While disabled, search reports `effective_mode: "keyword"` rather than claiming semantic or hybrid results.
+The provider interface includes a disabled adapter and an OpenAI-compatible adapter. The local UI may enable provider calls only after a user enters a key and explicitly confirms external data transfer/cost. The key is held in API process memory only (not in browser storage, `.env`, logs, database, or API responses) and is cleared when disabled or the API restarts. Runtime configuration is blocked outside `development`. While semantic retrieval is unfinished, search reports `effective_mode: "keyword"` rather than claiming semantic or hybrid results.
 
 ## Security posture
 

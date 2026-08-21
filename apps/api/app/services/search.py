@@ -2,9 +2,9 @@ import time
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
-from app.core.config import get_settings
 from app.models.repository import CodeChunk
 from app.schemas.search import SearchRequest, SearchResponse, SearchResult
+from app.services.runtime_embeddings import runtime_embedding_settings
 
 
 def _scoped_chunks(request: SearchRequest, organization_id) -> Select:
@@ -48,7 +48,9 @@ def search_chunks(db: Session, request: SearchRequest, organization_id) -> Searc
         query=request.query,
         latency_ms=int((time.perf_counter() - started) * 1_000),
         # Never present lexical results as semantic/hybrid matches while embeddings are disabled.
-        effective_mode="keyword" if not get_settings().enable_live_embeddings else request.mode.value,
-        semantic_enabled=get_settings().enable_live_embeddings,
+        effective_mode="keyword",
+        # The toggle permits provider calls, but semantic retrieval remains unavailable
+        # until pgvector indexing/RRF is implemented.
+        semantic_enabled=False,
         results=results,
     )

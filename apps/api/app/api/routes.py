@@ -8,11 +8,32 @@ from app.models.repository import Repository, RepositoryStatus
 from app.schemas.repository import DocumentIngest, IndexJobAccepted, IngestResult, RepositoryCreate, RepositoryRead
 from app.schemas.review import ReviewAccepted, ReviewRequest
 from app.schemas.search import SearchRequest, SearchResponse
+from app.schemas.settings import EmbeddingSettingsRead, EmbeddingSettingsUpdate
 from app.services.search import search_chunks
 from app.services.ingestion import ingest_document
+from app.services.runtime_embeddings import runtime_embedding_settings
 from app.services.tenant import current_organization_id
 
 router = APIRouter(prefix="/api")
+
+
+def _require_development_mode() -> None:
+    from app.core.config import get_settings
+
+    if get_settings().environment != "development":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Runtime provider configuration is disabled outside local development")
+
+
+@router.get("/settings/embeddings", response_model=EmbeddingSettingsRead)
+def get_embedding_settings() -> EmbeddingSettingsRead:
+    _require_development_mode()
+    return runtime_embedding_settings.read()
+
+
+@router.put("/settings/embeddings", response_model=EmbeddingSettingsRead)
+def update_embedding_settings(payload: EmbeddingSettingsUpdate) -> EmbeddingSettingsRead:
+    _require_development_mode()
+    return runtime_embedding_settings.update(payload)
 
 
 @router.post("/repositories", response_model=IndexJobAccepted, status_code=status.HTTP_202_ACCEPTED)

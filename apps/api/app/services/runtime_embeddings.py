@@ -8,6 +8,7 @@ from __future__ import annotations
 from threading import RLock
 
 from app.schemas.settings import EmbeddingSettingsRead, EmbeddingSettingsUpdate
+from app.retrieval.embeddings import EmbeddingProvider, build_embedding_provider
 
 
 class RuntimeEmbeddingSettings:
@@ -37,6 +38,10 @@ class RuntimeEmbeddingSettings:
                 # get_secret_value is used only here; never include it in errors/logs/responses.
                 self._api_key = update.api_key.get_secret_value() if update.api_key else None
             return self.read()
+
+    def provider(self) -> EmbeddingProvider:
+        with self._lock:
+            return build_embedding_provider(self._provider, self._enabled, self._api_key or "")
 
 
 runtime_embedding_settings = RuntimeEmbeddingSettings()

@@ -5,13 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.repository import Repository, RepositoryStatus
-from app.schemas.repository import DocumentIngest, IndexJobAccepted, IngestResult, RepositoryCreate, RepositoryRead
+from app.schemas.repository import DocumentIngest, EmbeddingIndexResult, IndexJobAccepted, IngestResult, RepositoryCreate, RepositoryRead
 from app.schemas.review import ReviewAccepted, ReviewRequest
 from app.schemas.search import SearchRequest, SearchResponse
 from app.schemas.settings import EmbeddingSettingsRead, EmbeddingSettingsUpdate
 from app.services.search import search_chunks
 from app.services.ingestion import ingest_document
 from app.services.runtime_embeddings import runtime_embedding_settings
+from app.services.embedding_indexer import index_repository_embeddings
 from app.services.tenant import current_organization_id
 
 router = APIRouter(prefix="/api")
@@ -70,6 +71,21 @@ def ingest_local_document(repository_id: uuid.UUID, payload: DocumentIngest, db:
         chunks_created=chunks_created,
         status=repository.status.value,
     )
+
+
+@router.post("/repositories/{repository_id}/embeddings", response_model=EmbeddingIndexResult)
+def index_embeddings(repository_id: uuid.UUID, db: Session = Depends(get_db)):
+    """Explicit, gated indexing action; no call occurs while the UI toggle is off."""
+    _require_development_mode()
+    organization_id = current_organization_id()
+    repository = db.get(Repository, repository_id)
+    if repository is None or repository.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
+    try:
+        count = index_repository_embeddings(db, repository, organization_id)
+    except RuntimeError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    return EmbeddingIndexResult(repository_id=repository.id, chunks_indexed=count, status="READY")
 
 
 @router.post("/search", response_model=SearchResponse)

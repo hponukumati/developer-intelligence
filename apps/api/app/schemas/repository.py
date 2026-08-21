@@ -71,3 +71,9 @@ class IngestResult(BaseModel):
     file_path: str
     chunks_created: int
     status: str
+
+
+class EmbeddingIndexResult(BaseModel):
+    repository_id: uuid.UUID
+    chunks_indexed: int
+    status: str

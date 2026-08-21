@@ -56,7 +56,7 @@ export function EmbeddingSettings() {
   return (
     <section className="panel settings-panel">
       <div className="section-heading"><div><p className="eyebrow">LOCAL DEVELOPMENT ONLY</p><h2>Embedding provider</h2></div><span className={settings?.embedding_calls_enabled ? "badge warning" : "badge secure"}>{settings?.embedding_calls_enabled ? "Enabled" : "Disabled"}</span></div>
-      <p className="notice">A key is never saved to this browser, `.env`, logs, or the database. It stays in API memory only and is erased when disabled or restarted.</p>
+      <p className="notice">A key is never saved to this browser, `.env`, logs, or the database. It stays in API memory only and is erased when disabled or restarted. When enabled, indexed source text and semantic-search queries may be sent to the provider.</p>
       <form onSubmit={save}>
         <label className="toggle-row">
           <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />
@@ -65,7 +65,7 @@ export function EmbeddingSettings() {
         {enabled && <>
           <label htmlFor="embedding-api-key">OpenAI API key</label>
           <input id="embedding-api-key" type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} autoComplete="off" spellCheck="false" minLength={20} maxLength={512} required />
-          <label className="acknowledgement"><input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} required /> I understand indexed source text may be sent to the provider and may incur cost.</label>
+          <label className="acknowledgement"><input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} required /> I understand indexed source text and semantic-search queries may be sent to the provider and may incur cost.</label>
         </>}
         <button type="submit">{enabled ? "Enable local embedding calls" : "Disable and clear key"}</button>
       </form>

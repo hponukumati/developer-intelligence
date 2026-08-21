@@ -21,17 +21,19 @@ The current API supports a local-only code-search workflow:
 
 1. `POST /api/repositories` with `provider: "local"` creates a repository record.
 2. `POST /api/repositories/{repository_id}/documents` accepts bounded source text and a normalized relative path.
-3. `POST /api/search` performs repository- and tenant-scoped keyword search.
+3. `POST /api/search` performs repository- and tenant-scoped keyword, semantic, or hybrid search.
+
+After a user explicitly enables the development-only embedding provider and acknowledges the external-transfer/cost warning, `POST /api/repositories/{repository_id}/embeddings` creates vectors for the repository. Semantic search uses those vectors; hybrid search combines them with keyword candidates.
 
 The document endpoint does not access the filesystem, clone URLs, or contact GitHub. Python is chunked by top-level functions/classes; other supported text/code formats use bounded line chunks.
 
 ## Embedding provider gate
 
-The provider interface includes a disabled adapter and an OpenAI-compatible adapter. The local UI may enable provider calls only after a user enters a key and explicitly confirms external data transfer/cost. The key is held in API process memory only (not in browser storage, `.env`, logs, database, or API responses) and is cleared when disabled or the API restarts. Runtime configuration is blocked outside `development`. While semantic retrieval is unfinished, search reports `effective_mode: "keyword"` rather than claiming semantic or hybrid results.
+The provider interface includes a disabled adapter and an OpenAI-compatible adapter. The local UI may enable provider calls only after a user enters a key and explicitly confirms external data transfer/cost. The key is held in API process memory only (not in browser storage, `.env`, logs, database, or API responses) and is cleared when disabled or the API restarts. Runtime configuration is blocked outside `development`. With the gate on, an explicit embedding-indexing run creates vectors and semantic or hybrid search sends the query to the selected provider. With the gate off, semantic search is rejected; hybrid search stays local and truthfully reports keyword-only results.
 
 ## Hybrid retrieval foundation
 
-`code_chunks.embedding` is a pgvector(1536) column with an HNSW cosine index. The migration is available through `docker-compose --profile tools run --rm migrate`. Keyword candidates already flow through Reciprocal Rank Fusion (RRF); vector candidates will join that same pipeline only after an approved embedding run creates them.
+`code_chunks.embedding` is a pgvector(1536) column with an HNSW cosine index. The migration is available through `docker-compose --profile tools run --rm migrate`. Keyword and vector candidates are combined with Reciprocal Rank Fusion (RRF). Vector retrieval is limited to chunks explicitly indexed after the caller enabled the development-only provider gate.
 
 ## Security posture
 

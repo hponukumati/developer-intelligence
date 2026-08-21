@@ -32,6 +32,19 @@ export function SearchPanel() {
     setMessage("Local source indexed. You can search it now.");
   }
 
+  async function indexEmbeddings() {
+    if (!repositoryId) return;
+    setMessage("Creating embeddings for this local repository…");
+    try {
+      const response = await fetch(`${apiBase}/api/repositories/${repositoryId}/embeddings`, { method: "POST" });
+      const payload = await response.json() as { chunks_indexed?: number; detail?: string };
+      if (!response.ok) throw new Error(payload.detail ?? "Embedding indexing failed");
+      setMessage(`Indexed ${payload.chunks_indexed ?? 0} chunks for semantic search.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Embedding indexing failed");
+    }
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!repositoryId) { setMessage("Index local source first."); return; }
@@ -41,10 +54,10 @@ export function SearchPanel() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, repository_id: repositoryId, mode }),
       });
-      if (!response.ok) throw new Error("Search failed");
-      const payload = await response.json() as { results: Result[]; effective_mode: string; semantic_enabled: boolean };
-      setResults(payload.results);
-      setMessage(payload.semantic_enabled ? `Showing ${payload.effective_mode} results.` : `Showing ${payload.effective_mode} results; embeddings are disabled.`);
+      const payload = await response.json() as { results?: Result[]; effective_mode?: string; semantic_enabled?: boolean; detail?: string };
+      if (!response.ok) throw new Error(payload.detail ?? "Search failed");
+      setResults(payload.results ?? []);
+      setMessage(`Showing ${payload.effective_mode ?? "keyword"} results.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Search failed"); }
   }
 
@@ -72,7 +85,9 @@ export function SearchPanel() {
           ))}
         </fieldset>
       </form>
+      <p className="notice search-notice">Semantic and hybrid modes require the local embedding gate to be enabled and an explicit indexing run. Queries can leave this machine only while that gate is on.</p>
       <p className="status" role="status">{message}{repositoryId && <><br /><small>Repository ready: {repositoryId.slice(0, 8)}…</small></>}</p>
+      {repositoryId && <button className="secondary-action" type="button" onClick={() => void indexEmbeddings()}>Create embeddings for this repository</button>}
       {results.map((result) => <article className="result" key={`${result.file_path}:${result.start_line}`}><strong>{result.file_path}</strong><span>Lines {result.start_line}–{result.end_line} · {(result.score * 100).toFixed(0)}%</span><pre>{result.content}</pre></article>)}
     </section>
   );

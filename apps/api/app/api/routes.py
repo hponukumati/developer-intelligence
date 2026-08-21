@@ -9,7 +9,7 @@ from app.schemas.repository import DocumentIngest, EmbeddingIndexResult, IndexJo
 from app.schemas.review import ReviewAccepted, ReviewRequest
 from app.schemas.search import SearchRequest, SearchResponse
 from app.schemas.settings import EmbeddingSettingsRead, EmbeddingSettingsUpdate
-from app.services.search import search_chunks
+from app.services.search import SemanticSearchProviderError, SemanticSearchUnavailable, search_chunks
 from app.services.ingestion import ingest_document
 from app.services.runtime_embeddings import runtime_embedding_settings
 from app.services.embedding_indexer import index_repository_embeddings
@@ -94,7 +94,12 @@ def search(payload: SearchRequest, db: Session = Depends(get_db)):
     if repository is None or repository.organization_id != current_organization_id():
         # Intentionally identical response for missing and unauthorized resources.
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
-    return search_chunks(db, payload, current_organization_id())
+    try:
+        return search_chunks(db, payload, current_organization_id())
+    except SemanticSearchUnavailable as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except SemanticSearchProviderError as error:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Semantic search is temporarily unavailable") from error
 
 
 @router.post("/reviews", response_model=ReviewAccepted, status_code=status.HTTP_202_ACCEPTED)

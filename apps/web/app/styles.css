@@ -28,6 +28,8 @@ fieldset { border: 0; padding: 16px 0 0; }
 .mode { display: inline-flex; align-items: center; gap: 5px; margin: 8px 18px 0 0; text-transform: capitalize; font-weight: 500; }
 .mode input { width: auto; }
 .status { color: #b7bed4; margin: 22px 0 0; }
+.search-notice { font-size: .9rem; margin-bottom: 0; }
+.secondary-action { background: transparent; border: 1px solid #7092ff; color: #b9c8ff; min-height: 42px; margin-top: 16px; }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 18px; }
 h2 { margin-top: 0; font-size: 1rem; }
 .card p { color: #b7bed4; line-height: 1.5; min-height: 72px; }

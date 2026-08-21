@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.repository import Repository, RepositoryStatus
-from app.schemas.repository import IndexJobAccepted, RepositoryCreate, RepositoryRead
+from app.schemas.repository import DocumentIngest, IndexJobAccepted, IngestResult, RepositoryCreate, RepositoryRead
 from app.schemas.review import ReviewAccepted, ReviewRequest
 from app.schemas.search import SearchRequest, SearchResponse
 from app.services.search import search_chunks
+from app.services.ingestion import ingest_document
 from app.services.tenant import current_organization_id
 
 router = APIRouter(prefix="/api")
@@ -30,7 +31,23 @@ def create_repository(payload: RepositoryCreate, db: Session = Depends(get_db)):
     db.refresh(repository)
     return IndexJobAccepted(
         repository=RepositoryRead.model_validate(repository),
-        message="Repository accepted. Indexing worker integration is the next milestone.",
+        message="Repository accepted. Ingest user-supplied documents through the local ingestion endpoint.",
+    )
+
+
+@router.post("/repositories/{repository_id}/documents", response_model=IngestResult)
+def ingest_local_document(repository_id: uuid.UUID, payload: DocumentIngest, db: Session = Depends(get_db)):
+    """Ingest user-supplied content only. It does not fetch paths or call GitHub."""
+    organization_id = current_organization_id()
+    repository = db.get(Repository, repository_id)
+    if repository is None or repository.organization_id != organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
+    chunks_created = ingest_document(db, repository, organization_id, payload.file_path, payload.content)
+    return IngestResult(
+        repository_id=repository.id,
+        file_path=payload.file_path,
+        chunks_created=chunks_created,
+        status=repository.status.value,
     )
 
 

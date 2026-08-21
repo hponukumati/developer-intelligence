@@ -10,7 +10,7 @@ BRANCH_NAME = re.compile(r"^[A-Za-z0-9._/-]{1,255}$")
 
 
 class RepositoryCreate(BaseModel):
-    provider: str = Field(default="github", pattern="^github$")
+    provider: str = Field(default="local", pattern="^(local|github)$")
     owner: str = Field(min_length=1, max_length=100)
     repository: str = Field(min_length=1, max_length=100)
     branch: str = Field(default="main", min_length=1, max_length=255)
@@ -44,3 +44,30 @@ class RepositoryRead(BaseModel):
 class IndexJobAccepted(BaseModel):
     repository: RepositoryRead
     message: str
+
+
+class DocumentIngest(BaseModel):
+    """A local-only document payload; GitHub fetching is intentionally separate."""
+
+    file_path: str = Field(min_length=1, max_length=1_024)
+    content: str = Field(min_length=1, max_length=1_048_576)
+
+    @field_validator("file_path")
+    @classmethod
+    def validate_file_path(cls, value: str) -> str:
+        normalized = value.replace("\\", "/")
+        parts = normalized.split("/")
+        if (
+            normalized.startswith("/")
+            or "\x00" in normalized
+            or any(part in {"", ".", ".."} for part in parts)
+        ):
+            raise ValueError("file path must be a relative, normalized path")
+        return normalized
+
+
+class IngestResult(BaseModel):
+    repository_id: uuid.UUID
+    file_path: str
+    chunks_created: int
+    status: str

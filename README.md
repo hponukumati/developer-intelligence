@@ -15,6 +15,16 @@ The initial foundation includes a FastAPI service, PostgreSQL with pgvector, rep
 
 The Docker ports bind to loopback only. Do not add real provider or GitHub credentials until the relevant integration is implemented and reviewed.
 
+## Current API flow
+
+The current API supports a local-only code-search workflow:
+
+1. `POST /api/repositories` with `provider: "local"` creates a repository record.
+2. `POST /api/repositories/{repository_id}/documents` accepts bounded source text and a normalized relative path.
+3. `POST /api/search` performs repository- and tenant-scoped keyword search.
+
+The document endpoint does not access the filesystem, clone URLs, or contact GitHub. Python is chunked by top-level functions/classes; other supported text/code formats use bounded line chunks.
+
 ## Security posture
 
 - No secrets in source control; `.env` is ignored.

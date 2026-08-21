@@ -3,6 +3,7 @@ from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
 from app.models.repository import CodeChunk
+from app.retrieval.fusion import reciprocal_rank_fusion
 from app.schemas.search import SearchRequest, SearchResponse, SearchResult
 from app.services.runtime_embeddings import runtime_embedding_settings
 
@@ -32,17 +33,22 @@ def search_chunks(db: Session, request: SearchRequest, organization_id) -> Searc
     statement = _scoped_chunks(request, organization_id)
     for term in terms:
         statement = statement.where(CodeChunk.content.ilike(f"%{term}%"))
-    chunks = db.execute(statement.limit(request.limit)).scalars().all()
+    keyword_chunks = db.execute(statement.limit(request.limit)).scalars().all()
+    # Vector candidates are intentionally absent until approved embeddings are generated.
+    # Keep RRF in the pipeline now so the source integration is an additive change later.
+    fused = reciprocal_rank_fusion([[chunk.id for chunk in keyword_chunks]])
+    chunks_by_id = {chunk.id: chunk for chunk in keyword_chunks}
+    chunks = [(chunks_by_id[chunk_id], score) for chunk_id, score in fused]
     results = [
         SearchResult(
             chunk_id=chunk.id,
             file_path=chunk.file_path,
             start_line=chunk.start_line,
             end_line=chunk.end_line,
-            score=1.0 / (index + 1),
+            score=score,
             content=chunk.content,
         )
-        for index, chunk in enumerate(chunks)
+        for chunk, score in chunks
     ]
     return SearchResponse(
         query=request.query,

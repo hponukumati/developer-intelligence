@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.api.routes import router
 from app.core.config import get_settings
@@ -20,7 +21,10 @@ app.include_router(router)
 
 @app.on_event("startup")
 def create_local_tables() -> None:
-    # Alembic migrations replace create_all before shared/staging environments.
+    # New local databases need the extension before SQLAlchemy creates vector columns.
+    with engine.begin() as connection:
+        connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+    # Alembic owns non-additive schema changes; this bootstraps an empty local database.
     Base.metadata.create_all(bind=engine)
 
 

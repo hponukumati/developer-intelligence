@@ -29,6 +29,10 @@ The document endpoint does not access the filesystem, clone URLs, or contact Git
 
 The provider interface includes a disabled adapter and an OpenAI-compatible adapter. The local UI may enable provider calls only after a user enters a key and explicitly confirms external data transfer/cost. The key is held in API process memory only (not in browser storage, `.env`, logs, database, or API responses) and is cleared when disabled or the API restarts. Runtime configuration is blocked outside `development`. While semantic retrieval is unfinished, search reports `effective_mode: "keyword"` rather than claiming semantic or hybrid results.
 
+## Hybrid retrieval foundation
+
+`code_chunks.embedding` is a pgvector(1536) column with an HNSW cosine index. The migration is available through `docker-compose --profile tools run --rm migrate`. Keyword candidates already flow through Reciprocal Rank Fusion (RRF); vector candidates will join that same pipeline only after an approved embedding run creates them.
+
 ## Security posture
 
 - No secrets in source control; `.env` is ignored.

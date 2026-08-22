@@ -4,7 +4,7 @@ Local-first MVP for hybrid code search and evidence-backed pull-request reviews.
 
 ## Current milestone
 
-The initial foundation includes a FastAPI service, PostgreSQL with pgvector, repository and review schemas, secure request validation, and a Next.js search/dashboard shell. GitHub OAuth, webhooks, automatic comments, and public deployment are deliberately deferred until a security-review checkpoint.
+The local MVP includes a FastAPI service, PostgreSQL with pgvector, bounded local ingestion, hybrid search, and persisted evidence briefs for pasted unified diffs. GitHub OAuth, webhooks, automatic comments, and public deployment are deliberately deferred until a security-review checkpoint.
 
 ## Local development
 
@@ -25,6 +25,15 @@ The current API supports a local-only code-search workflow:
 
 After a user explicitly enables the development-only embedding provider and acknowledges the external-transfer/cost warning, `POST /api/repositories/{repository_id}/embeddings` creates vectors for the repository. Semantic search uses those vectors; hybrid search combines them with keyword candidates.
 
+## Local patch evidence workflow
+
+1. Index local source for a repository.
+2. Paste a bounded text unified diff into `POST /api/reviews` (or the local UI).
+3. The service validates diff structure and paths, stores the local review, and returns indexed source chunks that overlap each changed hunk. It explicitly reports when no local context is available.
+4. `GET /api/reviews/{review_id}` reopens the stored evidence brief.
+
+This is evidence assistance only: it does not fetch a pull request, run repository code, execute an agent, make correctness judgments, or publish comments.
+
 The document endpoint does not access the filesystem, clone URLs, or contact GitHub. Python is chunked by top-level functions/classes; other supported text/code formats use bounded line chunks.
 
 ## Embedding provider gate
@@ -42,5 +51,6 @@ The provider interface includes a disabled adapter and an OpenAI-compatible adap
 - Repository references, URLs, request sizes, and enum values are validated.
 - Tenant ownership is represented on all repository-content records; future retrieval queries must enforce it.
 - Repository contents are untrusted data, never agent instructions.
+- Diff text and returned source excerpts are untrusted local display data; the service never opens paths or executes content from a patch.
 
 See `docs/security-checkpoint.md` for the review gate before any internet-facing integration.

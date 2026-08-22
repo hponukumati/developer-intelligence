@@ -5,14 +5,17 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.repository import Repository, RepositoryStatus
+from app.models.review import LocalReview
 from app.schemas.repository import DocumentIngest, EmbeddingIndexResult, IndexJobAccepted, IngestResult, RepositoryCreate, RepositoryRead
-from app.schemas.review import ReviewAccepted, ReviewRequest
+from app.schemas.review import ReviewRead, ReviewRequest
 from app.schemas.search import SearchRequest, SearchResponse
 from app.schemas.settings import EmbeddingSettingsRead, EmbeddingSettingsUpdate
 from app.services.search import SemanticSearchProviderError, SemanticSearchUnavailable, search_chunks
 from app.services.ingestion import ingest_document
 from app.services.runtime_embeddings import runtime_embedding_settings
 from app.services.embedding_indexer import index_repository_embeddings
+from app.services.local_review import InvalidPatch
+from app.services.review import create_local_review, to_review_read
 from app.services.tenant import current_organization_id
 
 router = APIRouter(prefix="/api")
@@ -60,6 +63,10 @@ def create_repository(payload: RepositoryCreate, db: Session = Depends(get_db)):
 @router.post("/repositories/{repository_id}/documents", response_model=IngestResult)
 def ingest_local_document(repository_id: uuid.UUID, payload: DocumentIngest, db: Session = Depends(get_db)):
     """Ingest user-supplied content only. It does not fetch paths or call GitHub."""
+    from app.core.config import get_settings
+
+    if len(payload.content.encode("utf-8")) > get_settings().max_upload_bytes:
+        raise HTTPException(status_code=413, detail="Document exceeds the local upload limit")
     organization_id = current_organization_id()
     repository = db.get(Repository, repository_id)
     if repository is None or repository.organization_id != organization_id:
@@ -102,13 +109,32 @@ def search(payload: SearchRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Semantic search is temporarily unavailable") from error
 
 
-@router.post("/reviews", response_model=ReviewAccepted, status_code=status.HTTP_202_ACCEPTED)
+@router.post("/reviews", response_model=ReviewRead, status_code=status.HTTP_201_CREATED)
 def create_review(payload: ReviewRequest, db: Session = Depends(get_db)):
+    from app.core.config import get_settings
+
+    if len(payload.patch.encode("utf-8")) > get_settings().max_upload_bytes:
+        raise HTTPException(status_code=413, detail="Patch exceeds the local upload limit")
     repository = db.get(Repository, payload.repository_id)
     if repository is None or repository.organization_id != current_organization_id():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
-    return ReviewAccepted(
-        review_id=uuid.uuid4(),
-        status="QUEUED",
-        message="Review accepted. PR fetching and agent execution are not enabled yet.",
-    )
+    try:
+        review = create_local_review(
+            db,
+            repository,
+            current_organization_id(),
+            payload.title,
+            payload.pull_request_number,
+            payload.patch,
+        )
+    except InvalidPatch as error:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)) from error
+    return to_review_read(review)
+
+
+@router.get("/reviews/{review_id}", response_model=ReviewRead)
+def get_review(review_id: uuid.UUID, db: Session = Depends(get_db)):
+    review = db.get(LocalReview, review_id)
+    if review is None or review.organization_id != current_organization_id():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review not found")
+    return to_review_read(review)

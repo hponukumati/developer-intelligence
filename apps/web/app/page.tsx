@@ -15,7 +15,7 @@ export default function Home() {
       <ReviewPanel />
       <section className="grid">
         <article className="card"><h2>Repository ingestion</h2><p>Queued, bounded, and not yet connected to GitHub. No repository content leaves local development.</p><span className="badge">Foundation</span></article>
-        <article className="card"><h2>Review queue</h2><p>Structured review requests are accepted by the API. Agent execution and GitHub publishing remain disabled.</p><span className="badge">Planned</span></article>
+        <article className="card"><h2>Patch evidence</h2><p>Paste a local unified diff to retrieve stored, repository-scoped source context for every changed hunk.</p><span className="badge secure">Local-only</span></article>
         <article className="card"><h2>Security checkpoint</h2><p>External review is required before OAuth, webhooks, public access, or deployment.</p><span className="badge secure">Required</span></article>
       </section>
     </main>

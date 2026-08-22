@@ -2,6 +2,14 @@
 
 Local-first MVP for hybrid code search and evidence-backed pull-request reviews.
 
+## What it does
+
+Developer Intelligence helps you inspect code you explicitly provide to a local development instance:
+
+- **Local code search:** paste a source file, index it, then search for relevant code chunks by keyword. With an explicit, development-only embedding-provider opt-in, it also supports semantic and hybrid retrieval.
+- **Patch evidence briefs:** paste a unified diff for an indexed repository and receive the stored source chunks that overlap each changed hunk. This gives a reviewer local context without cloning a repository or sending a pull request anywhere.
+- **Privacy-first defaults:** the API and database bind only to your machine. GitHub access, OAuth, webhooks, automatic comments, and deployment are not enabled.
+
 ## Current milestone
 
 The local MVP includes a FastAPI service, PostgreSQL with pgvector, bounded local ingestion, hybrid search, and persisted evidence briefs for pasted unified diffs. GitHub OAuth, webhooks, automatic comments, and public deployment are deliberately deferred until a security-review checkpoint.
@@ -14,6 +22,30 @@ The local MVP includes a FastAPI service, PostgreSQL with pgvector, bounded loca
 4. Browse to `http://localhost:3000`; API documentation is at `http://localhost:8000/docs`.
 
 The Docker ports bind to loopback only. Do not add real provider or GitHub credentials until the relevant integration is implemented and reviewed.
+
+## How to use it
+
+### 1. Search local code
+
+1. Open the local UI at `http://localhost:3000`.
+2. Under **Ask the codebase**, enter a relative file path and paste source code.
+3. Select **Index local source**. The UI creates a local repository and displays its ID.
+4. Enter a question and select **Search**. The default hybrid mode remains keyword-only until embeddings are explicitly enabled and indexed.
+
+### 2. Create a local patch evidence brief
+
+1. Keep the repository ID from the indexing step.
+2. Under **Local patch evidence**, paste that ID and a text unified diff (for example, output from `git diff`).
+3. Select **Create local evidence brief**.
+4. Review the returned context for each changed hunk. A “no indexed local context” message means the matching file/line range has not been indexed yet.
+
+### 3. Optionally enable semantic search
+
+Only do this if you accept that indexed source text and search queries will be sent to the selected embedding provider and may incur cost:
+
+1. In **Embedding provider**, enable the toggle, enter an API key, and acknowledge the external-transfer warning.
+2. Select **Create embeddings for this repository** after indexing your source.
+3. Use **semantic** or **hybrid** search. Disable the toggle at any time to clear the in-memory key and stop provider calls.
 
 ## Current API flow
 
